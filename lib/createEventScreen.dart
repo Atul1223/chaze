@@ -1,6 +1,12 @@
+import 'package:chase_map/Event.dart';
+import 'package:chase_map/dbFunction.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CreateEvent extends StatelessWidget {
+  final SupabaseClient supabaseClient;
+
+  const CreateEvent({super.key, required this.supabaseClient});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,7 +55,7 @@ class CreateEvent extends StatelessWidget {
             SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                // Handle button press
+                createEventInDb();
               },
               child: Text('Submit'),
             ),
@@ -58,6 +64,21 @@ class CreateEvent extends StatelessWidget {
       ),
       backgroundColor: Colors.white,
     );
+  }
+
+  void createEventInDb() async{
+    // await Supabase.initialize(
+    //   url: 'https://ehwrhfywdqhjweqtytuy.supabase.co',
+    //   anonKey:
+    //       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVod3JoZnl3ZHFoandlcXR5dHV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk5MDA5NDMsImV4cCI6MjAxNTQ3Njk0M30.pkQkYz1LQQhLLqOUv4Wf9JySZj9iBRt1_l2pK0vsFPA',
+    // );
+
+    // final supabase = Supabase.instance.client;
+
+    print("supabase $Supabase");
+    final SupabaseServiceDB supabaseServiceDB = SupabaseServiceDB(supabaseClient);
+    final EventDetails eventDetails = EventDetails(claimedWalletAddress: 123, eventId: 23, walletAddress: '3BoatSLRHtKNngkdXEeobR76b53LETtpyT', latitude: 13.0564, longitude: 14.0892, timeDeadline: 24, members: 5, eventName: 'Atul Ka event', tokenValue: 4.056);
+    await supabaseServiceDB.postEvent(eventDetails);
   }
 }
 

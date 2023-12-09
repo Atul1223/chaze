@@ -2,7 +2,6 @@ import 'package:chase_map/utlis.dart';
 import 'package:flutter/material.dart';
 import 'package:walletconnect_dart/walletconnect_dart.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:slider_button/slider_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -223,13 +222,13 @@ class _LoginPageState extends State<LoginPage> {
                                         ],
                                       ),
                                       const SizedBox(height: 20),
-                                      SliderButton(
-                                        action: () async {
-                                          // TODO: Navigate to main page
-                                        },
-                                        label: const Text('Slide to login'),
-                                        icon: const Icon(Icons.check),
-                                      )
+                                      // SliderButton(
+                                      //   action: () async {
+                                      //     // TODO: Navigate to main page
+                                      //   },
+                                      //   label: const Text('Slide to login'),
+                                      //   icon: const Icon(Icons.check),
+                                      // )
                                     ],
                                   )
                       ],

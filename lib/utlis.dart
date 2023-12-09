@@ -25,6 +25,6 @@ String generateSessionMessage(String accountAddress) {
 
 double calculateRadiusBasedOnZoom(double zoom) {
   // You can adjust this multiplier based on your preference
-  double multiplier = 1000;
+  double multiplier = 20;
   return multiplier * (2.0 / (1 << zoom.toInt()));
 }

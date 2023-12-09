@@ -1,6 +1,7 @@
 import 'package:chase_map/BackDropFilter_widget.dart';
 import 'package:chase_map/Event.dart';
 import 'package:chase_map/Profile.dart';
+import 'package:chase_map/User.dart';
 import 'package:chase_map/createEventScreen.dart';
 import 'package:chase_map/dbFunction.dart';
 import 'package:chase_map/icon_text.dart';
@@ -13,9 +14,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:location/location.dart';
 import 'package:mappls_gl/mappls_gl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:web3modal_flutter/web3modal_flutter.dart';
 
 class MapWidget extends StatefulWidget {
-  const MapWidget({super.key});
+  final W3MService w3mService;
+  final SupabaseClient supabaseClient;
+  const MapWidget({super.key, required this.w3mService, required this.supabaseClient});
 
   @override
   State<MapWidget> createState() => _MapWidgetState();
@@ -41,6 +45,9 @@ class _MapWidgetState extends State<MapWidget> {
   ];
   DirectionsRoute? route;
   bool isNavGoing = false;
+  List<EventDetails> _eventDeatils = [];
+  late EventDetails _currentEventDetail;
+  late SupabaseServiceDB supabaseServiceDB;
 
   @override
   void initState() {
@@ -54,8 +61,12 @@ class _MapWidgetState extends State<MapWidget> {
         "lrFxI-iSEg-Ev_JYB-O45J4-bvmEyGXratBYBlaeOVIXQcKUifvy1ioMRSghsB8rZMLx-iPyE-gTutF5d0roODymcKG98useBm_bh11AggA=");
 
     initLocation();
+    supabaseServiceDB = SupabaseServiceDB(widget.supabaseClient);
+    createUser();
 
-    loadData();
+    // initSupabase();
+
+    // loadData();
   }
 
   void initLocation() async {
@@ -89,7 +100,8 @@ class _MapWidgetState extends State<MapWidget> {
           myLocationTrackingMode: MyLocationTrackingMode.Tracking,
           onMapCreated: (mapController) {
             this.mapController = mapController;
-            addMarker(markerCoordinates);
+            loadData();
+            // addMarker(markerCoordinates);
           },
           onUserLocationUpdated: (location) => {
                 //changeCameraAngle()
@@ -107,7 +119,7 @@ class _MapWidgetState extends State<MapWidget> {
             onPressed: () => {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreateEvent()),
+                MaterialPageRoute(builder: (context) => CreateEvent(supabaseClient: widget.supabaseClient))
               )
             },
           ),
@@ -165,13 +177,13 @@ class _MapWidgetState extends State<MapWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Popup Heading',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                   Text(
+                    _currentEventDetail.eventName,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const TextWithIcon(label: 'Field 1', icon: Icons.person),
-                  const TextWithIcon(label: 'Field 2', icon: Icons.lock),
+                  TextWithIcon(label: _currentEventDetail.tokenValue.toString(), icon: Icons.person),
+                  TextWithIcon(label: _currentEventDetail.members.toString(), icon: Icons.lock),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: () {
@@ -208,23 +220,32 @@ class _MapWidgetState extends State<MapWidget> {
   void addMarker(List<LatLng> markerCoordinates) async {
     for (LatLng i in markerCoordinates) {
       await addImageFromAsset("icon", "assets/map/custom-icon.png");
+      print("latln: ${i.latitude} ${i.latitude}");
+      mapController.addSymbol(SymbolOptions(
+          geometry: LatLng(i.latitude, i.longitude), iconImage: "icon"));
+    }
+  }
+
+    void addMarkers(List<EventDetails> eventDetails) async {
+    for (EventDetails i in eventDetails) {
+      print("latln: ${i.latitude} ${i.latitude}");
+      await addImageFromAsset("icon", "assets/map/custom-icon.png");
       mapController.addSymbol(SymbolOptions(
           geometry: LatLng(i.latitude, i.longitude), iconImage: "icon"));
     }
   }
 
   void checkMarkerClick(LatLng clickedLatLng, double radius) {
-    for (LatLng markerLatLng in markerCoordinates) {
-      if ((markerLatLng.latitude - clickedLatLng.latitude).abs() < radius &&
-          (markerLatLng.longitude - clickedLatLng.longitude).abs() < radius) {
-        // Marker clicked
-        // Perform actions for marker click
-        print('Marker clicked: $markerLatLng');
+    for (EventDetails i in _eventDeatils) {
+      if ((i.latitude - clickedLatLng.latitude).abs() < radius &&
+          (i.longitude - clickedLatLng.longitude).abs() < radius) {
+        print('Marker clicked: $i');
         setState(() {
           isPopupVisible = true;
-          destinationLocation = markerLatLng;
+          destinationLocation = LatLng(i.latitude, i.longitude);
+          _currentEventDetail = i;
         });
-        break; // Break the loop once a marker is found
+        break;
       }
     }
   }
@@ -232,7 +253,7 @@ class _MapWidgetState extends State<MapWidget> {
   void startNavigation() async {
     // Get current location
     LatLng? origin = await mapController.requestMyLocationLatLng();
-    callDirection(origin!, markerCoordinates[0]);
+    callDirection(origin!, destinationLocation);
   }
 
   callDirection(LatLng originLocation, LatLng destinationLocation) async {
@@ -354,74 +375,80 @@ class _MapWidgetState extends State<MapWidget> {
         northeast: LatLng(x1!, y1!), southwest: LatLng(x0!, y0!));
   }
 
-  Future<void> loadData() async{
-    print("supabase 2");
-    dotenv.load();
-  // WidgetsFlutterBinding.ensureInitialized();
+  Future<void> loadData() async {
+    // final SupabaseClient supabaseClient = (await Supabase.initialize(
+    //   url: dotenv.env['SUPABASE_URL'] ?? '',
+    //   anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    // )) as SupabaseClient;
 
-  print("supabase 1");
+    //  await Supabase.initialize(
+    //   url: dotenv.env['SUPABASE_URL'] ?? '',
+    //   anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    // );
+    
+    // try {
+    //     final response = await supabase
+    //         .from('Event_tbl')
+    //         .select()
+    //         .eq('EventId',6);
 
-  // final SupabaseClient supabaseClient = (await Supabase.initialize(
-  //   url: dotenv.env['SUPABASE_URL'] ?? '',
-  //   anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-  // )) as SupabaseClient;
+    //     // if (response.error != null) {
+    //     //   throw response.error!;
+    //     // }
+    //     print("supabase $response");
 
-  //  await Supabase.initialize(
-  //   url: dotenv.env['SUPABASE_URL'] ?? '',
-  //   anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-  // );
+    //     final data = response.data;
+    //     print(data);
 
-   await Supabase.initialize(
-    url: 'https://ehwrhfywdqhjweqtytuy.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVod3JoZnl3ZHFoandlcXR5dHV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk5MDA5NDMsImV4cCI6MjAxNTQ3Njk0M30.pkQkYz1LQQhLLqOUv4Wf9JySZj9iBRt1_l2pK0vsFPA',
-  );
+    //     // final EventDetails event =
+    //     //  await supabaseServiceDB.getAllEvents();
+    //     // print('data ${event.claimedWalletAddress}');
+    //   } catch (ex) {
+    //     print('Error fetching data: $ex');
+    //   }
 
+    final List<EventDetails> events = await supabaseServiceDB.getAllEvents();
+    print('data ${events.first.eventName}');
+    setState(() {
+      _eventDeatils = events;
+    });
+    addMarkers(_eventDeatils);
 
-  final supabase = Supabase.instance.client;
+    // try {
+    //    final response = await supabase
+    //         .from('Event_tbl')
+    //         .select()
+    //         .eq('EventId', 7).single(); // Execute the query and retrieve a single row
 
+    //     // if (response.error != null) {
+    //     //   throw response.error!;
+    //     // }
 
-  print("supabase $supabase");
-  final SupabaseServiceDB supabaseServiceDB = SupabaseServiceDB(supabase);
-  // try {
-  //     final response = await supabase
-  //         .from('Event_tbl')
-  //         .select()
-  //         .eq('EventId',6);
-
-  //     // if (response.error != null) {
-  //     //   throw response.error!;
-  //     // }
-  //     print("supabase $response");
-
-  //     final data = response.data;
-  //     print(data);
-      
-  //     // final EventDetails event = 
-  //     //  await supabaseServiceDB.getAllEvents();
-  //     // print('data ${event.claimedWalletAddress}');
-  //   } catch (ex) {
-  //     print('Error fetching data: $ex');
-  //   }
-
-    final EventDetails event = 
-       await supabaseServiceDB.getAllEvents();
-      print('data ${event.claimedWalletAddress}');
-
-  // try {
-  //    final response = await supabase
-  //         .from('Event_tbl')
-  //         .select()
-  //         .eq('EventId', 7).single(); // Execute the query and retrieve a single row
-
-  //     // if (response.error != null) {
-  //     //   throw response.error!;
-  //     // }
-
-  //     final data = response.data;
-  //     print(data);
-  //   } catch (ex) {
-  //     print(ex);
-  //   }
-  // }
+    //     final data = response.data;
+    //     print(data);
+    //   } catch (ex) {
+    //     print(ex);
+    //   }
+    // }
   }
+
+  Future<void> createUser() async{
+    final UserData user = UserData(walletAddress: widget.w3mService.address.toString(), username: widget.w3mService.address.toString());
+    supabaseServiceDB.createUser(user);
+  } 
+  
+  // void initSupabase() async{
+  //   await Supabase.initialize(
+  //     url: 'https://ehwrhfywdqhjweqtytuy.supabase.co',
+  //     anonKey:
+  //         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVod3JoZnl3ZHFoandlcXR5dHV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk5MDA5NDMsImV4cCI6MjAxNTQ3Njk0M30.pkQkYz1LQQhLLqOUv4Wf9JySZj9iBRt1_l2pK0vsFPA',
+  //   );
+
+  //   final supabase = Supabase.instance.client;
+  //   setState(() {
+  //     this.supabase = supabase;
+  //   });
+
+  //   print("supabase $supabase");
+  // }
 }
