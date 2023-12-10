@@ -34,3 +34,10 @@ Frontend: Flutter, Figma (for UI/UX design)
 Backend: Supabase
 Smart Contracts: Remix IDE for solidity smart contract development
 Wallet Integration: WalletConnect for seamless wallet integration
+
+
+# Deployed Networks
+
+Polygon Mumbai - [0xd8F16a1f6878134dDE6879df196CeCC469B4086a](https://mumbai.polygonscan.com/address/0xd8F16a1f6878134dDE6879df196CeCC469B4086a)
+
+Scroll Sepolia Ethereum Testnet - [0x533Cd9927E9305AF2931cf51EB79a26Fc4a8F4C0](https://sepolia.etherscan.io/address/0x533cd9927e9305af2931cf51eb79a26fc4a8f4c0)
