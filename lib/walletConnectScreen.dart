@@ -46,31 +46,41 @@ class _WallectConnectScreenState extends State<WallectConnectScreen> {
     await _w3mService.init().then((value) => setState(() {
           isConnected = _w3mService.isConnected;
         }));
-        initSupabase();
+    initSupabase();
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-        child: Column(
-      children: !isConnected
-          ? [
-              W3MNetworkSelectButton(service: _w3mService),
-              W3MConnectWalletButton(service: _w3mService),
-            ]
-          : [
-              W3MAccountButton(service: _w3mService),
-              ElevatedButton(onPressed: () => {
-                  Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MapWidget(supabaseClient: supabaseClient,w3mService: _w3mService,))
-              )
-              }, child: Text('Start'))
-            ],
+        child: Container(
+      decoration: const BoxDecoration(
+          color: Color.fromRGBO(252, 252, 239, 1.0),
+          image: DecorationImage(image: AssetImage('assets/event/splash.png'), alignment: Alignment.bottomCenter)),
+      child: Column(
+        children: !isConnected
+            ? [
+                W3MNetworkSelectButton(service: _w3mService),
+                W3MConnectWalletButton(service: _w3mService),
+              ]
+            : [
+                W3MAccountButton(service: _w3mService),
+                ElevatedButton(
+                    onPressed: () => {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => MapWidget(
+                                        supabaseClient: supabaseClient,
+                                        w3mService: _w3mService,
+                                      )))
+                        },
+                    child: Text('Start'))
+              ],
+      ),
     ));
   }
 
-  void initSupabase() async{
+  void initSupabase() async {
     await Supabase.initialize(
       url: 'https://ehwrhfywdqhjweqtytuy.supabase.co',
       anonKey:

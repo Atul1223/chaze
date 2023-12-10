@@ -19,7 +19,8 @@ import 'package:web3modal_flutter/web3modal_flutter.dart';
 class MapWidget extends StatefulWidget {
   final W3MService w3mService;
   final SupabaseClient supabaseClient;
-  const MapWidget({super.key, required this.w3mService, required this.supabaseClient});
+  const MapWidget(
+      {super.key, required this.w3mService, required this.supabaseClient});
 
   @override
   State<MapWidget> createState() => _MapWidgetState();
@@ -48,6 +49,7 @@ class _MapWidgetState extends State<MapWidget> {
   List<EventDetails> _eventDeatils = [];
   late EventDetails _currentEventDetail;
   late SupabaseServiceDB supabaseServiceDB;
+  late LatLng currentLocation;
 
   @override
   void initState() {
@@ -101,10 +103,12 @@ class _MapWidgetState extends State<MapWidget> {
           onMapCreated: (mapController) {
             this.mapController = mapController;
             loadData();
+            setLocation();
             // addMarker(markerCoordinates);
           },
           onUserLocationUpdated: (location) => {
                 //changeCameraAngle()
+                setLocation()
               },
           onMapClick: (point, latlng) => {
                 radius = calculateRadiusBasedOnZoom(
@@ -118,9 +122,13 @@ class _MapWidgetState extends State<MapWidget> {
           child: FloatingActionButton(
             onPressed: () => {
               Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CreateEvent(supabaseClient: widget.supabaseClient))
-              )
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => CreateEvent(
+                            supabaseClient: widget.supabaseClient,
+                            w3mService: widget.w3mService,
+                            //latLng: currentLocation,
+                          )))
             },
           ),
         ),
@@ -177,13 +185,18 @@ class _MapWidgetState extends State<MapWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(
+                  Text(
                     _currentEventDetail.eventName,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  TextWithIcon(label: _currentEventDetail.tokenValue.toString(), icon: Icons.person),
-                  TextWithIcon(label: _currentEventDetail.members.toString(), icon: Icons.lock),
+                  TextWithIcon(
+                      label: _currentEventDetail.tokenValue.toString(),
+                      icon: Icons.person),
+                  TextWithIcon(
+                      label: _currentEventDetail.members.toString(),
+                      icon: Icons.lock),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: () {
@@ -226,7 +239,7 @@ class _MapWidgetState extends State<MapWidget> {
     }
   }
 
-    void addMarkers(List<EventDetails> eventDetails) async {
+  void addMarkers(List<EventDetails> eventDetails) async {
     for (EventDetails i in eventDetails) {
       print("latln: ${i.latitude} ${i.latitude}");
       await addImageFromAsset("icon", "assets/map/custom-icon.png");
@@ -248,6 +261,13 @@ class _MapWidgetState extends State<MapWidget> {
         break;
       }
     }
+  }
+
+  void setLocation() async {
+    setState(() async {
+      currentLocation = (await mapController.requestMyLocationLatLng())!;
+      print("currentloc $currentLocation");
+    });
   }
 
   void startNavigation() async {
@@ -385,7 +405,7 @@ class _MapWidgetState extends State<MapWidget> {
     //   url: dotenv.env['SUPABASE_URL'] ?? '',
     //   anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
     // );
-    
+
     // try {
     //     final response = await supabase
     //         .from('Event_tbl')
@@ -432,11 +452,13 @@ class _MapWidgetState extends State<MapWidget> {
     // }
   }
 
-  Future<void> createUser() async{
-    final UserData user = UserData(walletAddress: widget.w3mService.address.toString(), username: widget.w3mService.address.toString());
+  Future<void> createUser() async {
+    final UserData user = UserData(
+        walletAddress: widget.w3mService.address.toString(),
+        username: widget.w3mService.address.toString());
     supabaseServiceDB.createUser(user);
-  } 
-  
+  }
+
   // void initSupabase() async{
   //   await Supabase.initialize(
   //     url: 'https://ehwrhfywdqhjweqtytuy.supabase.co',

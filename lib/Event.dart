@@ -20,20 +20,7 @@ class EventDetails {
     required this.eventName,
     required this.tokenValue,
   });
-
-  // factory EventDetails.fromJson(Map<String, dynamic> json) {
-  //   return EventDetails(
-  //     claimedWalletAddress: json['claimedWalletAddress'] ?? 0,
-  //     eventId: json['EventId'] ?? 0,
-  //     walletAddress: json['walletaddress'] ?? '',
-  //     latitude: json['latitude'] ?? '',
-  //     longitude: json['longitude'] ?? '',
-  //     timeDeadline: json['timedeadline'] ?? 0,
-  //     members: json['members'] ?? 0,
-  //     eventName: json['EventName'] ?? '',
-  //   );
-  // }
-
+  
   factory EventDetails.fromMap(Map<String, dynamic> map) {
     return EventDetails(
       claimedWalletAddress: map['claimedWalletAddress'],

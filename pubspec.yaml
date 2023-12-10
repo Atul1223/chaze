@@ -42,11 +42,11 @@ dependencies:
   url_launcher: ^6.2.1
   provider: ^6.1.1
   http: ^1.1.2
-  walletconnect_dart: ^0.0.11
-  web3dart: ^2.3.5
+  web3dart: ^2.7.2
   supabase_flutter: ^1.6.2
   flutter_dotenv: ^5.0.4
   web3modal_flutter: ^3.0.1
+  flutter_web3: ^2.1.9
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets/map/custom-icon.png
     - assets/event/
+    - assets/smartContract/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
